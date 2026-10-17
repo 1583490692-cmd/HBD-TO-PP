@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>异国恋 · 我们的故事</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:#1a1626; font-family:"PingFang SC","Microsoft YaHei",sans-serif; display:flex; align-items:center; justify-content:center; overflow:hidden; color:#fff; }
+  #stage { position:relative; width:100%; max-width:480px; height:100vh; max-height:860px; background:linear-gradient(180deg,#2a2440 0%,#1a1626 100%); overflow:hidden; box-shadow:0 0 30px rgba(0,0,0,.8); }
+  
+  .star { position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; opacity:.6; animation:twinkle 2.5s infinite ease-in-out; }
+  @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:.9} }
+  
+  #chapterTag { position:absolute; top:18px; left:0; right:0; text-align:center; font-size:12px; letter-spacing:2px; color:rgba(245,230,200,.55); opacity:0; transition:opacity .6s; z-index:10; }
+  #chapterTag.show { opacity:1; }
+  
+  #date { position:absolute; top:36%; left:0; right:0; text-align:center; font-size:22px; letter-spacing:3px; color:#f5e6c8; opacity:0; text-shadow:0 0 12px rgba(245,230,200,.5); white-space:pre-line; line-height:1.6; z-index:10; }
+  #date.show { animation:dateIn 2.4s forwards; }
+  @keyframes dateIn { 0%{opacity:0; transform:translateY(12px);} 40%{opacity:1; transform:translateY(0);} 80%{opacity:1;} 100%{opacity:0;} }
+
+  .char { position:absolute; bottom:28%; opacity:0; transition:opacity .8s, transform .8s; z-index:5; }
+  .char.show { opacity:1; }
+  #wolverine { left:12%; transform:translateX(-40px) scale(.9); }
+  #wolverine.show { transform:translateX(0) scale(1); }
+  #cat { right:12%; transform:translateX(40px) scale(.9); }
+  #cat.show { transform:translateX(0) scale(1); }
+  .pixel-art { font-size:70px; display:block; line-height:1; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+  
+  .bubble { position:absolute; max-width:210px; background:#fff; color:#2a2440; font-size:14px; line-height:1.5; padding:10px 14px; border-radius:14px; opacity:0; transform:translateY(8px); transition:opacity .45s, transform .45s; box-shadow:0 6px 16px rgba(0,0,0,.35); z-index:6; }
+  .bubble.show { opacity:1; transform:translateY(0); }
+  .bubble::after { content:""; position:absolute; border:8px solid transparent; }
+  #wolverineBubble { left:12%; bottom:calc(28% + 100px); }
+  #wolverineBubble::after { left:20px; bottom:-14px; border-top-color:#fff; }
+  #catBubble { right:12%; bottom:calc(28% + 100px); }
+  #catBubble::after { right:20px; bottom:-14px; border-top-color:#fff; }
+
+  #choices { position:absolute; bottom:6%; left:0; right:0; padding:0 24px; display:flex; flex-direction:column; gap:12px; opacity:0; pointer-events:none; transition:opacity .5s; z-index:10; }
+  #choices.show { opacity:1; pointer-events:auto; }
+  .choice { background:rgba(255,255,255,.08); border:1.5px solid rgba(245,230,200,.5); color:#f5e6c8; font-size:15px; padding:14px 16px; border-radius:12px; cursor:pointer; text-align:left; transition:all .2s; backdrop-filter:blur(4px); }
+  .choice:hover, .choice:active { background:rgba(245,230,200,.18); transform:translateY(-2px); }
+
+  #result { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(.85); width:82%; text-align:center; font-size:17px; line-height:1.7; color:#fff; background:rgba(42,36,64,.95); border:1.5px solid rgba(245,230,200,.5); border-radius:16px; padding:26px 20px; opacity:0; pointer-events:none; transition:opacity .5s, transform .5s; box-shadow:0 10px 40px rgba(0,0,0,.6); z-index:20; }
+  #result.show { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
+  #result .emo { font-size:36px; display:block; margin-bottom:10px; }
+  #result .pic { display:none; margin:12px auto 4px; max-width:100%; max-height:140px; border-radius:6px; object-fit:contain; }
+  #result .pic.show { display:block; }
+  #nextBtn { margin-top:18px; background:#f5e6c8; color:#2a2440; border:none; border-radius:10px; font-size:14px; padding:10px 24px; cursor:pointer; font-weight:600; }
+
+  /* 找东西 / 排序 通用 */
+  #exploreArea { position:absolute; top:0; left:0; width:100%; height:100%; display:none; flex-wrap:wrap; align-content:center; justify-content:center; gap:20px; padding:20px; z-index:15; background:rgba(26,22,38,.95); }
+  #exploreArea.show { display:flex; }
+  .item { font-size:45px; cursor:pointer; transition:transform .3s, opacity .3s; filter:drop-shadow(0 5px 5px rgba(0,0,0,.5)); }
+  .item:active { transform:scale(1.2); }
+  .item.hidden { opacity:0; pointer-events:none; transform:scale(0); }
+  .item.clue { font-size:16px; background:rgba(245,230,200,.2); padding:10px 15px; border-radius:10px; border:1px dashed #f5e6c8; color:#f5e6c8; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.05);} 100%{transform:scale(1);} }
+  .scoreBoard { position:absolute; top:60px; width:100%; text-align:center; font-size:14px; color:#f5e6c8; opacity:0; transition:opacity .5s; z-index:16; }
+  .scoreBoard.show { opacity:1; }
+
+  /* 做题选项图 */
+  .quiz-img { width:80px; height:80px; object-fit:cover; border-radius:8px; margin-right:10px; vertical-align:middle; border:2px solid #fff; }
+
+  /* 打call游戏 */
+  #ringGame { position:absolute; top:0; left:0; width:100%; height:100%; display:none; flex-direction:column; align-items:center; justify-content:center; z-index:15; background:rgba(26,22,38,.95); }
+  #ringGame.show { display:flex; }
+  .ring-btn { font-size:100px; cursor:pointer; transition:transform .1s; user-select:none; filter:drop-shadow(0 10px 20px rgba(255,100,100,.5)); }
+  .ring-btn:active { transform:scale(.9); }
+  .ring-score { margin-top:20px; font-size:28px; color:#f5e6c8; font-weight:bold; }
+  .ring-timer { margin-top:10px; font-size:16px; color:rgba(255,255,255,.7); }
+  .money-float { position:absolute; font-size:20px; color:#ffd700; font-weight:bold; pointer-events:none; animation:floatUp 1s forwards; }
+  @keyframes floatUp { 0%{opacity:1; transform:translateY(0) scale(1);} 100%{opacity:0; transform:translateY(-50px) scale(1.5);} }
+
+  /* 拆信游戏 */
+  #letterGame { position:absolute; top:0; left:0; width:100%; height:100%; display:none; flex-direction:column; align-items:center; justify-content:center; z-index:15; background:rgba(26,22,38,.95); padding:20px; }
+  #letterGame.show { display:flex; }
+  .envelope { font-size:120px; cursor:pointer; transition:opacity .5s, transform .5s; }
+  .envelope.opened { opacity:0; transform:scale(1.5); pointer-events:none; }
+  .letter-paper { display:none; width:100%; max-height:80vh; overflow-y:auto; background:#fdf5e6; color:#333; padding:25px 20px; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,.5); line-height:1.8; font-size:15px; text-align:left; border:1px solid #d4c5a9; }
+  .letter-paper.show { display:block; animation:letterIn 1s forwards; }
+  @keyframes letterIn { 0%{opacity:0; transform:translateY(50px);} 100%{opacity:1; transform:translateY(0);} }
+  .letter-paper p { margin-bottom:15px; }
+  .letter-paper .highlight { color:#c0392b; font-weight:bold; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="chapterTag"></div>
+  <div id="date"></div>
+  
+  <div class="char" id="wolverine"><div class="pixel-art">🦡</div></div>
+  <div class="bubble" id="wolverineBubble"></div>
+  <div class="char" id="cat"><div class="pixel-art">🐱</div></div>
+  <div class="bubble" id="catBubble"></div>
+  
+  <div id="choices"></div>
+  
+  <div id="result">
+    <span class="emo"></span><span class="txt"></span>
+    <img class="pic" id="resultPic" src="">
+    <br><button id="nextBtn">继续 →</button>
+  </div>
+
+  <div id="exploreArea"></div>
+  <div class="scoreBoard" id="scoreBoard"></div>
+
+  <!-- 打call -->
+  <div id="ringGame">
+    <div class="ring-timer" id="ringTimer">剩余时间: 60s</div>
+    <div class="ring-btn" id="ringBtn">🔔</div>
+    <div class="ring-score" id="ringScore">我的支持: $0</div>
+  </div>
+
+  <!-- 拆信 -->
+  <div id="letterGame">
+    <div class="envelope" id="envelope">💌</div>
+    <div class="letter-paper" id="letterPaper"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), chapterTag = $('#chapterTag'), dateEl = $('#date');
+const wolverine = $('#wolverine'), wBubble = $('#wolverineBubble');
+const cat = $('#cat'), cBubble = $('#catBubble');
+const choices = $('#choices'), result = $('#result'), nextBtn = $('#nextBtn'), resultPic = $('#resultPic');
+const exploreArea = $('#exploreArea'), scoreBoard = $('#scoreBoard');
+
+// 星星
+for(let i=0;i<40;i++){ let s=document.createElement('div'); s.className='star'; s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%'; s.style.animationDelay=Math.random()*3+'s'; stage.appendChild(s); }
+
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+
+function resetScene(){ 
+  wolverine.classList.remove('show'); cat.classList.remove('show'); 
+  wBubble.classList.remove('show'); cBubble.classList.remove('show'); 
+  choices.classList.remove('show'); result.classList.remove('show'); 
+  resultPic.classList.remove('show'); choices.innerHTML=''; 
+  exploreArea.innerHTML=''; exploreArea.classList.remove('show'); 
+  scoreBoard.classList.remove('show'); wBubble.textContent=''; cBubble.textContent=''; 
+}
+function showDate(text){ dateEl.textContent = text; dateEl.classList.remove('show'); void dateEl.offsetWidth; dateEl.classList.add('show'); }
+function showChapter(tag){ chapterTag.textContent = tag; chapterTag.classList.add('show'); }
+function showResult(emo, txt, imgSrc){
+  result.querySelector('.emo').textContent = emo;
+  result.querySelector('.txt').innerHTML = txt;
+  if(imgSrc){ resultPic.src = imgSrc; resultPic.classList.add('show'); }
+  result.classList.add('show');
+}
+
+// 通用剧情播放
+async function playScene(scene){
+  resetScene();
+  showChapter(scene.chapter || '');
+  if(scene.date){ showDate(scene.date); await wait(2000); }
+  if(scene.lines && scene.lines.length > 0){
+    wolverine.classList.add('show'); cat.classList.add('show'); await wait(500);
+    for(const line of scene.lines){
+      if(line.who==='w'){ wBubble.textContent = line.text; wBubble.classList.add('show'); cBubble.classList.remove('show'); }
+      else { cBubble.textContent = line.text; cBubble.classList.add('show'); wBubble.classList.remove('show'); }
+      await wait(line.hold || 1500);
+    }
+    wBubble.classList.remove('show'); cBubble.classList.remove('show');
+  }
+
+  if(scene.explore){ await wait(300); startExplore(scene.explore); } 
+  else if(scene.choices){ await wait(300); renderChoices(scene.choices); }
+}
+
+// 渲染选项
+function renderChoices(choiceData){
+  choiceData.forEach((ch)=>{
+    const b = document.createElement('button');
+    b.className='choice'; 
+    if(ch.img) b.innerHTML = `<img src="${ch.img}" class="quiz-img">${ch.text}`;
+    else b.textContent = ch.text;
+    
+    b.addEventListener('click', async ()=>{
+      choices.classList.remove('show'); await wait(350);
+      if(ch.nextAction){ ch.nextAction(); } 
+      else { showResult(ch.resEmo, ch.resTxt, ch.pic); }
+    });
+    choices.appendChild(b);
+  });
+  choices.classList.add('show');
+}
+
+// 找东西逻辑
+let foundCount = 0; let totalItems = 0; let currentExplore = null;
+function startExplore(data){
+  currentExplore = data; foundCount = 0; totalItems = data.items.length;
+  exploreArea.innerHTML = ''; exploreArea.classList.add('show');
+  scoreBoard.textContent = `已找到 0 / ${totalItems} 个物品`; scoreBoard.classList.add('show');
+  data.items.forEach(emoji => {
+    const el = document.createElement('div');
+    el.className = 'item'; el.textContent = emoji;
+    el.addEventListener('click', ()=>{
+      el.classList.add('hidden'); foundCount++;
+      scoreBoard.textContent = `已找到 ${foundCount} / ${totalItems} 个物品`;
+      if(foundCount === totalItems){ setTimeout(showClue, 500); }
+    });
+    exploreArea.appendChild(el);
+  });
+}
+function showClue(){
+  exploreArea.innerHTML = '';
+  const clueBtn = document.createElement('div');
+  clueBtn.className = 'item clue';
+  clueBtn.textContent = `线索：它们在「${currentExplore.targetName}」！`;
+  clueBtn.addEventListener('click', ()=>{
+    exploreArea.innerHTML = '';
+    const targetBtn = document.createElement('div');
+    targetBtn.className = 'item'; targetBtn.style.fontSize = '60px';
+    targetBtn.innerHTML = currentExplore.targetName === '钢琴广场' ? '🪑📱' : '🛋️🐱';
+    
+    targetBtn.addEventListener('click', ()=>{
+      targetBtn.classList.add('hidden');
+      exploreArea.classList.remove('show'); scoreBoard.classList.remove('show');
+      if(currentExplore.targetName === '钢琴广场'){
+        showResult('🎉', '找到手机啦！', null); 
+        nextBtn.onclick = ()=>{ result.classList.remove('show'); runFindCat(); };
+      } else {
+        showResult('🎉', '恭喜你找到小咪并且帮助小咪找到手机<br>获得新装备 Apple tag<br>妈妈再也不用担心我找不到东西啦！', null);
+        nextBtn.onclick = ()=>{ result.classList.remove('show'); nextScene(); };
+      }
+    });
+    exploreArea.appendChild(targetBtn);
+  });
+  exploreArea.appendChild(clueBtn);
+}
+
+// 排序小游戏
+function startSortGame(places){
+  exploreArea.innerHTML = ''; exploreArea.classList.add('show');
+  scoreBoard.textContent = `请按顺序点击地名（点完即可）`; scoreBoard.classList.add('show');
+  let clicked = 0;
+  // 打乱顺序
+  const shuffled = [...places].sort(()=>Math.random()-0.5);
+  shuffled.forEach(place=>{
+    const el = document.createElement('div');
+    el.className = 'item clue'; el.textContent = place;
+    el.style.fontSize = '14px'; el.style.animation = 'none';
+    el.addEventListener('click', ()=>{
+      el.classList.add('hidden'); clicked++;
+      if(clicked === places.length){ 
+        exploreArea.classList.remove('show'); scoreBoard.classList.remove('show'); 
+        showResult('🎉', '恭喜你排序正确！<br>奖励你再给我们安排一次蜜月旅行！（坏笑）', null);
+      }
+    });
+    exploreArea.appendChild(el);
+  });
+}
+
+// 打call小游戏
+let ringScoreVal = 0;
+function startRingGame(){
+  ringScoreVal = 0; $('#ringScore').textContent = `我的支持: $0`;
+  $('#ringGame').classList.add('show');
+  let timeLeft = 60; $('#ringTimer').textContent = `剩余时间: ${timeLeft}s`;
+  $('#ringBtn').onclick = (e)=>{
+    if(timeLeft <= 0) return;
+    if(ringScoreVal >= 200) return;
+    ringScoreVal += 10;
+    $('#ringScore').textContent = `我的支持: $${ringScoreVal}`;
+    // 漂浮特效
+    const float = document.createElement('div');
+    float.className = 'money-float'; float.textContent = '+$10';
+    float.style.left = e.clientX + 'px'; float.style.top = e.clientY + 'px';
+    $('#ringGame').appendChild(float);
+    setTimeout(()=>float.remove(), 1000);
+  };
+  const timer = setInterval(()=>{
+    timeLeft--; $('#ringTimer').textContent = `剩余时间: ${timeLeft}s`;
+    if(timeLeft <= 0){ 
+      clearInterval(timer); 
+      $('#ringBtn').onclick = null;
+      showResult('🔔', `时间到！<br>你为我打call赢得了 $${ringScoreVal}！<br>谢谢你的支持，我们继续！`, null);
+      nextBtn.onclick = ()=>{ result.classList.remove('show'); $('#ringGame').classList.remove('show'); startLetterGame(); };
+    }
+  }, 1000);
+}
+
+// 拆信
+const letterText = `亲爱的宝宝祝你25岁生日快乐哇！你已经年过半半百！已经是个大宝贝啦！去年生日只给你冷冰冰转money 感觉有点可怜🥺<br><br>其实老说讨厌你的时候只是讨厌你没有在我身边！哼！其实还蛮好的。<br><br>异国恋真的很讨厌。有的时候然后我觉得你不喜欢我了，好委屈，快点待到我身边吧亲爱的！我们再坚持坚持！<br><br>做这个礼物的时候我回忆了很多，说距离没有消耗感情确实是假的！但是我还是很庆幸 我们能相遇 相爱 ！我们是很不一样的人 又是很合拍的人 是你让文艺忧郁的我变得稍微理智切合实际关注问题一点点。那这样可爱的我 希望也能给你的生活带来一点点好运 因为我是瑞幸女神。<br><br>你其实很了不起的 一个小小的宝宝到美国去读书 有时候我还和你发脾气 压力你 和你说一下对不起吧！（我也是随便说的 别当真吧 略略略）<br><br>读博后半段可能会很辛苦 但是我会一直在你手机小屏幕里 捣乱！一段真挚的爱好难得 请我们彼此珍惜吧！<br><br>爱你 （一般般爱吧！来麻阳的时候特别爱一下）<br><br><span class="highlight">讨厌你！</span>`;
+
+function startLetterGame(){
+  $('#letterGame').classList.add('show');
+  $('#envelope').classList.remove('opened');
+  $('#letterPaper').classList.remove('show');
+  $('#envelope').onclick = ()=>{
+    $('#envelope').classList.add('opened');
+    setTimeout(()=>{
+      $('#letterPaper').classList.add('show');
+      // 打字机效果 (简单实现)
+      $('#letterPaper').innerHTML = '';
+      let i = 0;
+      const chars = letterText.split('');
+      function type(){
+        if(i < chars.length){
+          if(chars[i] === '<') { // 处理html标签
+            let tag = '';
+            while(chars[i] !== '>'){ tag += chars[i]; i++; }
+            tag += '>'; i++;
+            $('#letterPaper').innerHTML += tag;
+          } else {
+            $('#letterPaper').innerHTML += chars[i]; i++;
+          }
+          if(i % 3 === 0) setTimeout(type, 20); // 控制速度
+          else type();
+        } else {
+          $('#letterGame').classList.remove('show');
+          showResult('💌', '（信纸已读完，抱抱你）', null);
+          nextBtn.onclick = ()=> { result.classList.remove('show'); resetScene(); showDate('全剧终 · 爱你'); };
+        }
+      }
+      type();
+    }, 1000);
+  };
+}
+
+// ============ 剧情数据 ============
+
+// 第一章
+const scene1 = {
+  chapter:'第一章', date:'2022年5月9日',
+  lines:[{who:'w', text:'hi，我是刚才那个小狼獾', hold:1600},{who:'c', text:'你好呀，我在偷窥你的朋友圈', hold:1600}],
+  choices:[
+    {text:'a. 呵斥小猫咪不准看', resEmo:'😶', resTxt:'很遗憾，你什么也没获得'},
+    {text:'b. 帮助小猫咪打开朋友圈权限', resEmo:'🎉', resTxt:'恭喜你，凭借此截图获取<br>朋友圈生日祝福一条'}
+  ]
+};
+
+const scene1_2 = {
+  chapter:'第一章', date:'一周后…\n地点：HUT',
+  lines:[
+    {who:'w', text:'你在干啥呢？', hold:1300},
+    {who:'c', text:'练习演讲', hold:1300},
+    {who:'w', text:'有空不？我待会要来hut！', hold:1500},
+    {who:'c', text:'-，-？！', hold:1300},
+    {who:'w', text:'给你带杯茶颜', hold:1300},
+    {who:'c', text:'不要！', hold:1300}
+  ],
+  choices:[
+    {text:'a. 强制带', resEmo:'🎉', resTxt:'恭喜你，凭此截图获得茶颜一杯'},
+    {text:'b. 好吧算了', resEmo:'💩', resTxt:'很遗憾，你获得了一坨咪咪便便'}
+  ]
+};
+
+const scene1_3 = {
+  chapter:'第一章', date:'2022年5月20日 周日',
+  lines:[
+    {who:'w', text:'我到门口啦 一起去公共楼自习吧！', hold:1600},
+    {who:'c', text:'好滴 😐', hold:1400},
+    {who:'c', text:'今天天气好好呀！你作业多不多？', hold:1600},
+    {who:'w', text:'嗯…', hold:1200}
+  ],
+  choices:[
+    {text:'a. 天气虽然好但是我要写作业', resEmo:'🎉', resTxt:'恭喜你获得批改卷子一次'},
+    {text:'b. 作业没关系呀 我们出去玩吧！', resEmo:'🎉', resTxt:'恭喜你获得<br>侯师傅热炒x1 拥抱x1 牵手x1<br>（可替换任意餐厅，猫咪请客）<br>凭此截图兑换'}
+  ]
+};
+
+// 第二章
+const scene2_1 = {
+  chapter:'第二章', date:'宿舍楼下',
+  lines:[{who:'c', text:'你头发有点乱了', hold:1500}],
+  choices:[
+    {text:'a. 关你屁事', resEmo:'💩', resTxt:'恭喜你获得 当头一棒'},
+    {text:'b. 伸出头 拜托整理头发', resEmo:'🎉', resTxt:'恭喜你获得挖耳朵挠头20min 套餐<br>凭此截图兑换'}
+  ]
+};
+
+// 注意：请将代码放在文件夹里，把三张图分别命名为 1.jpg, 2.jpg, 3.jpg (穿搭图)
+// 穿搭题：第二个是正确答案。
+const scene2_quiz1 = {
+  chapter:'第二章', date:'',
+  lines:[{who:'w', text:'欢乐快问快答！第一题：请选出我们第一次date的穿搭 👗', hold:2000}],
+  choices:[
+    {text:'穿搭 A', img:'1.jpg', resEmo:'❌', resTxt:'猜错啦！'},
+    {text:'穿搭 B', img:'2.jpg', resEmo:'🎉', resTxt:'回答正确！<br>获得礼物：情侣装一件'},
+    {text:'穿搭 C', img:'3.jpg', resEmo:'❌', resTxt:'猜错啦！'}
+  ]
+};
+
+// 亲吻地点：第一个是正确答案。请将图分别命名为 kiss1.jpg, kiss2.jpg, kiss3.jpg
+const scene2_quiz2 = {
+  chapter:'第二章', date:'',
+  lines:[{who:'w', text:'第二题：Where was our first kiss? 💋', hold:2000}],
+  choices:[
+    {text:'地点 A', img:'kiss1.jpg', resEmo:'🎉', resTxt:'回答正确！<br>获得礼物：甜甜kiss 一个（凭截图兑换）'},
+    {text:'地点 B', img:'kiss2.jpg', resEmo:'❌', resTxt:'猜错啦！'},
+    {text:'地点 C', img:'kiss3.jpg', resEmo:'❌', resTxt:'猜错啦！'}
+  ]
+};
+
+const scene2_quiz3 = {
+  chapter:'第二章', date:'',
+  lines:[{who:'w', text:'第三题：请将这些地方按照时间顺序排序（随便点，点完就对了）', hold:2000}],
+  choices:[
+    {text:'开始排序', nextAction: ()=>{
+      const places = ['炎陵','武汉','柳州','巴黎','巴塞罗那','里斯本','塞维利亚','波尔图','衡山','武功山','西湖','绍兴','伊斯坦布尔','曼谷','吉隆坡','亚庇','洞庭湖','大连','马六甲','马特鲁','卢克索','川西'];
+      startSortGame(places);
+    }}
+  ]
+};
+
+const scene2_findPhone = {
+  chapter:'第二章', date:'',
+  lines:[{who:'c', text:'哎呀我手机去哪了？帮我找找！', hold:1500}],
+  explore: { items: ['🧸','📸','💌','💐','🍞'], targetName: '钢琴广场', targetHint: '点击长椅上的 📱 手机' }
+};
+
+const scene2_findCat = {
+  chapter:'第二章', date:'',
+  lines:[{who:'w', text:'那接下来，帮我找找小咪去哪了？', hold:1500}],
+  explore: { items: ['🗑️','🛏️','🚪'], targetName: '酒店沙发', targetHint: '点击沙发上的 🐱' }
+};
+
+// 第三章
+const scene3_call = {
+  chapter:'第三章', date:'喜欢的话请响铃',
+  lines:[{who:'w', text:'请疯狂为我打call！计时1分钟，看看你能给我花多少钱！', hold:2000}],
+  choices:[
+    {text:'开始按铃', nextAction: ()=>{ startRingGame(); }}
+  ]
+};
+
+// ============ 流程控制 ============
+async function run(){
+  await playScene(scene1); await waitNext(runScene1_2);
+}
+async function runScene1_2(){
+  await playScene(scene1_2); await waitNext(runScene1_3);
+}
+async function runScene1_3(){
+  await playScene(scene1_3); await waitNext(runScene2_1);
+}
+async function runScene2_1(){
+  await playScene(scene2_1); await waitNext(runQuiz1);
+}
+async function runQuiz1(){
+  await playScene(scene2_quiz1); await waitNext(runQuiz2);
+}
+async function runQuiz2(){
+  await playScene(scene2_quiz2); await waitNext(runQuiz3);
+}
+async function runQuiz3(){
+  await playScene(scene2_quiz3); 
+  // 排序游戏内部处理了next，这里需监听全局nextBtn
+  await waitNext(runFindPhone);
+}
+async function runFindPhone(){
+  await playScene(scene2_findPhone); 
+}
+async function runFindCat(){
+  await playScene(scene2_findCat);
+}
+async function nextScene(){
+  await playScene(scene3_call);
+  await waitNext(()=>{}); // 这里空等，因为startRingGame里面有自己的nextBtn监听
+}
+
+function waitNext(callback){
+  return new Promise(res=>{
+    nextBtn.onclick = ()=>{ result.classList.remove('show'); res(); if(callback) callback(); };
+  });
+}
+
+run();
+</script>
+</body>
+</html>
